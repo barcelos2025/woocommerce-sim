@@ -77,14 +77,15 @@ const getStoreData = (req, res) => {
     const host = req.get("host");
     const baseUrl = `${protocolo}://${host}`;
 
-    // Engine recursivo de injeção de link absoluto
+    // Engine recursivo de injeção de link absoluto (v6.0 Enhanced)
     const injectBaseUrl = (obj) => {
       if (Array.isArray(obj)) return obj.map(item => injectBaseUrl(item));
       if (obj !== null && typeof obj === "object") {
         const newObj = {};
         for (const key in obj) {
           const val = obj[key];
-          if (["href", "permalink", "src"].includes(key) && typeof val === "string" && val.startsWith("/")) {
+          // Injeta baseUrl em links relativos e campos críticos para Wiio (delivery_url, src, href)
+          if (["href", "permalink", "src", "delivery_url", "avatar_url"].includes(key) && typeof val === "string" && val.startsWith("/")) {
             newObj[key] = baseUrl + val;
           } else {
             newObj[key] = injectBaseUrl(val);
@@ -95,7 +96,7 @@ const getStoreData = (req, res) => {
       return obj;
     };
 
-    // Dados Mockados de Alta Fidelidade (v6.0)
+    // 1. STORE INFO (URL Absoluta Conforme Requisitado)
     const storeInfo = {
       name: "Zygora Store",
       description: "Minimalist European Fashion",
@@ -108,16 +109,110 @@ const getStoreData = (req, res) => {
       country: "DE",
       language: "de_DE",
       wordpress_version: "6.4.3",
-    _links: {
-      self: [{ href: `${baseUrl}/wp-json/wc/v3/data` }],
-      help: [{ href: "https://woocommerce.github.io/woocommerce-rest-api-docs/" }],
-      up: [{ href: `${baseUrl}/wp-json/wc/v3` }]
-    }
-  };
+      woocommerce_version: "8.5.1"
+    };
 
-  console.log(`[ULTIMATE PARITY] /data discovery accessed by ${req.ip} | Host: ${host}`);
+    // 2. CONFIGURAÇÕES EXPANDIDAS (General, Products, Tax, Shipping, Checkout)
+    const enrichedSettings = {
+      general: [
+        { id: "woocommerce_store_address", value: "Berlin Street", label: "Store Address" },
+        { id: "woocommerce_default_country", value: "DE", label: "Country" },
+        { id: "woocommerce_currency", value: "EUR", label: "Currency" }
+      ],
+      products: [
+        { id: "woocommerce_weight_unit", value: "kg" },
+        { id: "woocommerce_dimension_unit", value: "cm" },
+        { id: "woocommerce_enable_reviews", value: "yes" }
+      ],
+      tax: [
+        { id: "woocommerce_calc_taxes", value: "yes" },
+        { id: "woocommerce_prices_include_tax", value: "yes" }
+      ],
+      shipping: [
+        { id: "woocommerce_ship_to_countries", value: "all" },
+        { id: "woocommerce_shipping_debug_mode", value: "no" }
+      ],
+      checkout: [
+        { id: "woocommerce_enable_guest_checkout", value: "yes" },
+        { id: "woocommerce_enable_checkout_login_reminder", value: "yes" }
+      ]
+    };
 
-  res.status(200).json(response);
+    // 3. ENRICHED SYSTEM STATUS (PHP, MySQL, Limits)
+    const enrichedSystemStatus = {
+      environment: {
+        home_url: baseUrl,
+        site_url: baseUrl,
+        version: "8.5.1",
+        wp_version: "6.4.3",
+        language: "de_DE",
+        default_timezone: "Europe/Berlin",
+        php_version: "8.1.27",
+        mysql_version: "8.0.36",
+        memory_limit: "512M",
+        post_max_size: "64M",
+        max_execution_time: "300",
+        max_upload_size: "64M",
+        fsockopen_or_curl_enabled: true,
+        soapclient_enabled: true,
+        domdocument_enabled: true,
+        gzip_enabled: true,
+        remote_post_successful: true,
+        remote_get_successful: true
+      },
+      database: {
+        wc_database_version: "8.5.1",
+        database_prefix: "wp_"
+      },
+      active_plugins: [
+        { plugin: "woocommerce/woocommerce.php", name: "WooCommerce", version: "8.5.1" }
+      ],
+      theme: { name: "Storefront", version: "4.5.4" }
+    };
+
+    // 4. REPORTS MOCK
+    const enrichedReports = [
+      {
+        slug: "sales",
+        description: "Relatório de vendas globais.",
+        _links: { self: [{ href: "/wp-json/wc/v3/reports/sales" }] }
+      }
+    ];
+
+    const finalData = {
+      store: storeInfo,
+      products: injectBaseUrl(require("../data/mockData").products),
+      orders: injectBaseUrl(require("../data/mockData").orders),
+      customers: injectBaseUrl(require("../data/mockData").customers),
+      settings: enrichedSettings,
+      system_status: enrichedSystemStatus,
+      payment_gateways: injectBaseUrl(require("../data/mockData").paymentGateways),
+      shipping_zones: injectBaseUrl(require("../data/mockData").shippingZones),
+      taxes: injectBaseUrl(require("../data/mockData").taxRates),
+      reports: injectBaseUrl(enrichedReports),
+      stats: require("../data/mockData").stats,
+      _links: {
+        self: [{ href: baseUrl + "/wp-json/wc/v3/data" }],
+        help: [{ href: "https://woocommerce.github.io/woocommerce-rest-api-docs/" }]
+      }
+    };
+
+    const payload = JSON.stringify(finalData);
+    const endTime = Date.now();
+    
+    console.log(`[INTEGRITY v6.0] GET /data executed in ${endTime - startTime}ms | Payload: ${(Buffer.byteLength(payload) / 1024).toFixed(2)} KB`);
+
+    res.setHeader("Content-Type", "application/json");
+    return res.status(200).send(payload);
+
+  } catch (error) {
+    console.error("[CRITICAL BUG] Error in getStoreData aggregator:", error);
+    return res.status(500).json({
+      code: "internal_server_error",
+      message: "Erro ao agregar dados da loja.",
+      error: error.message
+    });
+  }
 };
 
 const getSystemStatus = (req, res) => {
