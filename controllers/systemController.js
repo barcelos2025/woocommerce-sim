@@ -12,6 +12,40 @@ const {
   stats 
 } = require("../data/mockData");
 
+const getWebhooks = (req, res) => {
+  const { search } = req.query;
+  const protocolo = req.headers["x-forwarded-proto"] || req.protocol;
+  const host = req.get("host");
+  const baseUrl = `${protocolo}://${host}`;
+
+  let filteredWebhooks = require("../data/mockData").webhooks;
+
+  if (search) {
+    filteredWebhooks = filteredWebhooks.filter(w => 
+      w.name.toLowerCase().includes(search.toLowerCase()) || 
+      w.topic.toLowerCase().includes(search.toLowerCase())
+    );
+  }
+
+  const injectBaseUrl = (obj) => {
+    if (Array.isArray(obj)) return obj.map(item => injectBaseUrl(item));
+    if (obj !== null && typeof obj === "object") {
+      const newObj = {};
+      for (const key in obj) {
+        if (["href", "permalink", "src"].includes(key) && typeof obj[key] === "string" && obj[key].startsWith("/")) {
+          newObj[key] = baseUrl + obj[key];
+        } else {
+          newObj[key] = injectBaseUrl(obj[key]);
+        }
+      }
+      return newObj;
+    }
+    return obj;
+  };
+
+  res.json(injectBaseUrl(filteredWebhooks));
+};
+
 const getStoreData = (req, res) => {
   const protocolo = req.headers["x-forwarded-proto"] || req.protocol;
   const host = req.get("host");
@@ -167,5 +201,6 @@ module.exports = {
     require("../data/mockData").webhooks.push(n);
     res.status(201).json(n);
   },
+  getWebhooks,
   getStoreData
 };

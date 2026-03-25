@@ -75,6 +75,7 @@ router.get("/wp-json/wc/v3/settings", systemController.getSettings);
 router.get("/wp-json/wc/v3/customers", systemController.getCustomers);
 router.get("/wp-json/wc/v3/taxes", systemController.getTaxes);
 router.get("/wp-json/wc/v3/shipping/zones", systemController.getShippingZones);
+router.get("/wp-json/wc/v3/webhooks", systemController.getWebhooks);
 router.post("/wp-json/wc/v3/webhooks", systemController.createWebhook);
 router.get("/wp-json/wc/v3/data", systemController.getStoreData);
 

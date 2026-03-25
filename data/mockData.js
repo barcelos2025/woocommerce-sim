@@ -305,7 +305,27 @@ const paymentGateways = [
 const countries = [{ code: "DE", name: "Germany" }];
 const currencies = [{ code: "EUR", name: "Euro", symbol: "€" }];
 const reports = [];
-const webhooks = [];
+const webhooks = [
+  {
+    id: 1,
+    name: "Order Create Webhook (Wiio Sync)",
+    status: "active",
+    topic: "order.created",
+    resource: "order",
+    event: "created",
+    delivery_url: "https://wiio.io/webhook/wc/order-create",
+    secret: "sec_abc123",
+    date_created: "2024-01-01T10:00:00",
+    date_created_gmt: "2024-01-01T09:00:00",
+    date_modified: "2024-01-01T10:00:00",
+    date_modified_gmt: "2024-01-01T09:00:00",
+    api_version: "v3",
+    _links: {
+      self: [{ href: "/wp-json/wc/v3/webhooks/1" }],
+      collection: [{ href: "/wp-json/wc/v3/webhooks" }]
+    }
+  }
+];
 const stats = {
   total_products: 1,
   total_orders: 1,
