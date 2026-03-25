@@ -185,6 +185,36 @@ const getCustomers = (req, res) => {
   res.json(injectBaseUrl(customers));
 };
 
+const getPaymentGateways = (req, res) => {
+  const protocolo = req.headers["x-forwarded-proto"] || req.protocol;
+  const host = req.get("host");
+  const baseUrl = `${protocolo}://${host}`;
+  const inject = (obj) => {
+    if (Array.isArray(obj)) return obj.map(item => inject(item));
+    if (obj !== null && typeof obj === "object") {
+      const n = {};
+      for(let k in obj) n[k] = (["href", "permalink"].includes(k) && typeof obj[k] === "string" && obj[k].startsWith("/")) ? baseUrl + obj[k] : inject(obj[k]);
+      return n;
+    }
+    return obj;
+  };
+  const data = require("../data/mockData").paymentGateways;
+  res.setHeader("X-WP-Total", data.length);
+  res.setHeader("X-WP-TotalPages", 1);
+  res.json(inject(data));
+};
+
+const getTaxClasses = (req, res) => {
+  const data = [
+    { slug: "standard", name: "Padrão" },
+    { slug: "reduced-rate", name: "Taxa Reduzida" },
+    { slug: "zero-rate", name: "Isento" }
+  ];
+  res.setHeader("X-WP-Total", data.length);
+  res.setHeader("X-WP-TotalPages", 1);
+  res.json(data);
+};
+
 module.exports = {
   getSystemStatus,
   getSettings: (req, res) => res.json(settings),
@@ -219,6 +249,8 @@ module.exports = {
     };
     res.json(inject(taxRates));
   },
+  getTaxClasses,
+  getPaymentGateways,
   createWebhook: (req, res) => {
     const d = req.body;
     const n = { id: Math.floor(Math.random()*1000)+1, ...d, status: "active", date_created: new Date().toISOString() };
