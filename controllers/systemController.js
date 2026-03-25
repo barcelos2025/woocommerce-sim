@@ -32,11 +32,31 @@ const createWebhook = (req, res) => {
   res.status(201).json(newWebhook);
 };
 
+const getStoreData = (req, res) => {
+  const { products, orders, customers, settings, systemStatus, shippingZones, taxRates } = require("../data/mockData");
+  
+  res.json({
+    store: {
+      name: "WooCommerce Simulator",
+      description: "Simulador de API para integração",
+      url: `${req.headers["x-forwarded-proto"] || req.protocol}://${req.get("host")}`
+    },
+    products,
+    orders,
+    customers,
+    settings,
+    system_status: systemStatus,
+    taxes: taxRates,
+    shipping_zones: shippingZones
+  });
+};
+
 module.exports = {
   getSystemStatus,
   getSettings,
   getCustomers,
   getShippingZones,
   getTaxes,
-  createWebhook
+  createWebhook,
+  getStoreData
 };

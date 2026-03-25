@@ -64,6 +64,7 @@ router.get("/wp-json/wc/v3/customers", systemController.getCustomers);
 router.get("/wp-json/wc/v3/taxes", systemController.getTaxes);
 router.get("/wp-json/wc/v3/shipping/zones", systemController.getShippingZones);
 router.post("/wp-json/wc/v3/webhooks", systemController.createWebhook);
+router.get("/wp-json/wc/v3/data", systemController.getStoreData);
 
 // 3. Produtos
 router.get("/wp-json/wc/v3/products", productController.getAllProducts);
@@ -99,7 +100,8 @@ const mainRoutes = [
   "/wp-json/wc/v3/orders",
   "/wp-json/wc/v3/system_status",
   "/wp-json/wc/v3/customers",
-  "/wp-json/wc/v3/webhooks"
+  "/wp-json/wc/v3/webhooks",
+  "/wp-json/wc/v3/data"
 ];
 
 mainRoutes.forEach((path) => {
