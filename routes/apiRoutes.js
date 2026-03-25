@@ -102,7 +102,7 @@ router.get("/", (req, res) => {
   const baseUrl = getBaseUrl(req);
   res.json({ 
     status: "online", 
-    simulator: "WooCommerce Simulator v5.0", 
+    simulator: "Zygora Store", 
     api_version: "wc/v3",
     environment: "production",
     discovery_url: `${baseUrl}/wp-json/wc/v3/data`,

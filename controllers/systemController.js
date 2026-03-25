@@ -39,17 +39,17 @@ const getStoreData = (req, res) => {
 
   const response = {
     store: injectBaseUrl({
-      name: "WooCommerce Simulator v5.0",
-      description: "Ambiente de Simulação de Paridade Total para Integração Wiio",
+      name: "Zygora Store",
+      description: "Minimalist European Fashion",
       url: "/",
       home_url: "/",
-      site_title: "WooCommerce Simulator",
-      admin_email: "admin@woocommerce-simulator.local",
-      timezone: "America/Sao_Paulo",
-      currency: "BRL",
-      currency_symbol: "R$",
-      country: "BR",
-      language: "pt_BR",
+      site_title: "Zygora Store",
+      admin_email: "admin@zygora.com",
+      timezone: "Europe/Berlin",
+      currency: "EUR",
+      currency_symbol: "€",
+      country: "DE",
+      language: "de_DE",
       wordpress_version: "6.4.3",
       woocommerce_version: "8.5.1",
       meta_data: []
