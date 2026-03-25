@@ -23,12 +23,24 @@ router.use((req, res, next) => {
 router.get("/wp-json", (req, res) => {
   const baseUrl = getBaseUrl(req);
   res.json({
-    name: "WooCommerce Simulator",
-    description: "Simulador de API WooCommerce para integração",
+    name: "WooCommerce Simulator v5.0",
+    description: "Plataforma de Simulação de Alta Fidelidade para Integração Wiio",
     url: baseUrl,
-    namespaces: ["wc/v1", "wc/v2", "wc/v3"],
-    authentication: [],
-    _links: { help: [{ href: "https://woocommerce.github.io/woocommerce-rest-api-docs/" }] }
+    home: baseUrl,
+    namespaces: [
+      "wc/v1",
+      "wc/v2",
+      "wc/v3",
+      "wc-telemetry"
+    ],
+    authentication: {
+      "oauth1.0a": { "description": "WooCommerce REST API uses OAuth 1.0a to authenticate requests." },
+      "application-passwords": { "description": "WordPress Application Passwords are also supported." }
+    },
+    _links: {
+      help: [{ href: "https://woocommerce.github.io/woocommerce-rest-api-docs/" }],
+      self: [{ href: `${baseUrl}/wp-json` }]
+    }
   });
 });
 
@@ -87,26 +99,55 @@ router.delete("/wp-json/wc/v3/logs", (req, res) => {
 
 // 6. Status da API (Root Principal)
 router.get("/", (req, res) => {
-  res.json({ status: "online", simulator: "WooCommerce v3", version: "4.0 (Wiio Ready)" });
+  const baseUrl = getBaseUrl(req);
+  res.json({ 
+    status: "online", 
+    simulator: "WooCommerce Simulator v5.0", 
+    api_version: "wc/v3",
+    environment: "production",
+    discovery_url: `${baseUrl}/wp-json/wc/v3/data`,
+    _links: {
+      help: [{ href: "https://woocommerce.github.io/woocommerce-rest-api-docs/" }]
+    }
+  });
 });
 
-// Suporte a HEAD e OPTIONS para rotas principais
+// Suporte a HEAD e OPTIONS para rotas principais (Fidelidade Total WC)
 const mainRoutes = [
   "/",
   "/wp-json",
   "/wp-json/wc",
+  "/wp-json/wc/v1",
+  "/wp-json/wc/v2",
   "/wp-json/wc/v3",
   "/wp-json/wc/v3/products",
   "/wp-json/wc/v3/orders",
-  "/wp-json/wc/v3/system_status",
   "/wp-json/wc/v3/customers",
+  "/wp-json/wc/v3/system_status",
+  "/wp-json/wc/v3/settings",
+  "/wp-json/wc/v3/taxes",
+  "/wp-json/wc/v3/shipping/zones",
+  "/wp-json/wc/v3/payment_gateways",
   "/wp-json/wc/v3/webhooks",
-  "/wp-json/wc/v3/data"
+  "/wp-json/wc/v3/data",
+  "/wp-json/wc/v3/reports",
+  "/wp-json/wc/v3/logs"
 ];
 
 mainRoutes.forEach((path) => {
-  router.options(path, (req, res) => res.status(200).end());
-  router.head(path, (req, res) => res.status(200).end());
+  router.options(path, (req, res) => {
+    res.setHeader("Allow", "GET, POST, PUT, DELETE, OPTIONS, HEAD");
+    res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, HEAD");
+    res.status(200).end();
+  });
+  // HEAD retorna os mesmos headers que o GET
+  router.head(path, (req, res) => {
+    res.setHeader("X-Robots-Tag", "noindex");
+    res.setHeader("X-Content-Type-Options", "nosniff");
+    res.setHeader("Content-Type", "application/json; charset=UTF-8");
+    res.setHeader("X-WP-Total", "0"); // Placeholder se necessário
+    res.status(200).end();
+  });
 });
 
 module.exports = router;

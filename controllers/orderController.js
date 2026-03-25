@@ -28,30 +28,24 @@ const getAllOrders = (req, res) => {
     start = parseInt(offset);
   }
 
-  const paginatedOrders = filteredOrders.slice(start, start + per_page);
+  // Injectar Base URL nos links internos de cada pedido (Recursivo)
+  const injectBaseUrl = (obj) => {
+    if (Array.isArray(obj)) return obj.map(item => injectBaseUrl(item));
+    if (obj !== null && typeof obj === "object") {
+      const newObj = {};
+      for (const key in obj) {
+        if (["href", "permalink", "src", "payment_url", "avatar_url"].includes(key) && typeof obj[key] === "string" && obj[key].startsWith("/")) {
+          newObj[key] = `${protocolo}://${host}` + obj[key];
+        } else {
+          newObj[key] = injectBaseUrl(obj[key]);
+        }
+      }
+      return newObj;
+    }
+    return obj;
+  };
 
-  // Headers WC
-  res.setHeader("X-WP-Total", total);
-  res.setHeader("X-WP-TotalPages", totalPages);
-
-  // Link Header (Padrão Oficial WC)
-  const protocolo = req.headers["x-forwarded-proto"] || req.protocol;
-  const host = req.get("host");
-  const baseUrl = `${protocolo}://${host}${req.path}`;
-  
-  let links = [];
-  if (page < totalPages) {
-    links.push(`<${baseUrl}?page=${page + 1}&per_page=${per_page}>; rel="next"`);
-  }
-  if (page > 1) {
-    links.push(`<${baseUrl}?page=${page - 1}&per_page=${per_page}>; rel="prev"`);
-  }
-  links.push(`<${baseUrl}?page=${totalPages}&per_page=${per_page}>; rel="last"`);
-  links.push(`<${baseUrl}?page=1&per_page=${per_page}>; rel="first"`);
-  
-  res.setHeader("Link", links.join(", "));
-
-  res.json(paginatedOrders);
+  res.json(injectBaseUrl(paginatedOrders));
 };
 
 const getOrderById = (req, res) => {
@@ -59,7 +53,26 @@ const getOrderById = (req, res) => {
   const order = orders.find((o) => o.id === parseInt(id));
 
   if (order) {
-    res.json(order);
+    const protocolo = req.headers["x-forwarded-proto"] || req.protocol;
+    const host = req.get("host");
+
+    const injectBaseUrl = (obj) => {
+      if (Array.isArray(obj)) return obj.map(item => injectBaseUrl(item));
+      if (obj !== null && typeof obj === "object") {
+        const newObj = {};
+        for (const key in obj) {
+          if (["href", "permalink", "src", "payment_url", "avatar_url"].includes(key) && typeof obj[key] === "string" && obj[key].startsWith("/")) {
+            newObj[key] = `${protocolo}://${host}` + obj[key];
+          } else {
+            newObj[key] = injectBaseUrl(obj[key]);
+          }
+        }
+        return newObj;
+      }
+      return obj;
+    };
+
+    res.json(injectBaseUrl(order));
   } else {
     res.status(404).json({
       code: "woocommerce_rest_order_invalid_id",
