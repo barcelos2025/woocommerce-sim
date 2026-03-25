@@ -109,10 +109,10 @@ const orders = [
     date_modified_gmt: "2024-01-01T10:05:00",
     discount_total: "0.00",
     discount_tax: "0.00",
-    shipping_total: "0.00",
+    shipping_total: "5.00",
     shipping_tax: "0.00",
     cart_tax: "0.00",
-    total: "39.90",
+    total: "44.90",
     total_tax: "0.00",
     prices_include_tax: true,
     customer_id: 1,
@@ -145,11 +145,11 @@ const orders = [
     },
     payment_method: "bacs",
     payment_method_title: "Direct Bank Transfer",
-    transaction_id: "",
+    transaction_id: "txn_zygora_123",
     date_paid: "2024-01-01T11:02:00",
     date_paid_gmt: "2024-01-01T10:02:00",
-    date_completed: null,
-    date_completed_gmt: null,
+    date_completed: "2024-01-01T15:00:00",
+    date_completed_gmt: "2024-01-01T14:00:00",
     cart_hash: "hash_zygora_1",
     meta_data: [],
     line_items: [
@@ -167,19 +167,29 @@ const orders = [
         taxes: [],
         meta_data: [],
         sku: "TSHIRT-001",
-        price: 39.90,
+        price: "39.90",
         parent_name: null
       }
     ],
     tax_lines: [],
-    shipping_lines: [],
+    shipping_lines: [
+      {
+        id: 1,
+        method_title: "Flat Rate",
+        method_id: "flat_rate",
+        total: "5.00",
+        total_tax: "0.00",
+        taxes: [],
+        meta_data: []
+      }
+    ],
     fee_lines: [],
     coupon_lines: [],
     refunds: [],
     payment_url: "/checkout/order-pay/5001/?pay_for_order=true&key=wc_order_zyg5001",
-    is_editable: true,
+    is_editable: false,
     needs_payment: false,
-    needs_processing: true,
+    needs_processing: false,
     _links: {
       self: [{ href: "/wp-json/wc/v3/orders/5001" }],
       collection: [{ href: "/wp-json/wc/v3/orders" }],
@@ -296,9 +306,19 @@ const paymentGateways = [
   { 
     id: "bacs", 
     title: "Direct Bank Transfer", 
+    description: "Take payments via bank transfer.",
+    order: 1,
     enabled: true, 
     method_title: "BACS", 
-    _links: { self: [{ href: "/wp-json/wc/v3/payment_gateways/bacs" }] }
+    method_description: "Bank Transfer Payment Method",
+    method_supports: ["products"],
+    settings: {
+      instructions: { value: "Please transfer the money to our account." }
+    },
+    _links: { 
+      self: [{ href: "/wp-json/wc/v3/payment_gateways/bacs" }],
+      collection: [{ href: "/wp-json/wc/v3/payment_gateways" }]
+    }
   }
 ];
 

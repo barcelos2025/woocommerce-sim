@@ -71,37 +71,36 @@ const getWebhooks = (req, res) => {
 };
 
 const getStoreData = (req, res) => {
-  const protocolo = req.headers["x-forwarded-proto"] || req.protocol;
-  const host = req.get("host");
-  const baseUrl = `${protocolo}://${host}`;
+  const startTime = Date.now();
+  try {
+    const protocolo = req.headers["x-forwarded-proto"] || req.protocol;
+    const host = req.get("host");
+    const baseUrl = `${protocolo}://${host}`;
 
-  // Engine recursivo robusto para injetar a base URL em todos os links e referências
-  const injectBaseUrl = (obj) => {
-    if (Array.isArray(obj)) {
-      return obj.map(item => injectBaseUrl(item));
-    } else if (obj !== null && typeof obj === "object") {
-      const newObj = {};
-      for (const key in obj) {
-        const val = obj[key];
-        // Campos que tradicionalmente contêm caminhos relativos na API WC
-        if (["href", "permalink", "src", "home_url", "site_url", "payment_url", "avatar_url"].includes(key) && typeof val === "string" && val.startsWith("/")) {
-          newObj[key] = baseUrl + val;
-        } else {
-          newObj[key] = injectBaseUrl(val);
+    // Engine recursivo de injeção de link absoluto
+    const injectBaseUrl = (obj) => {
+      if (Array.isArray(obj)) return obj.map(item => injectBaseUrl(item));
+      if (obj !== null && typeof obj === "object") {
+        const newObj = {};
+        for (const key in obj) {
+          const val = obj[key];
+          if (["href", "permalink", "src"].includes(key) && typeof val === "string" && val.startsWith("/")) {
+            newObj[key] = baseUrl + val;
+          } else {
+            newObj[key] = injectBaseUrl(val);
+          }
         }
+        return newObj;
       }
-      return newObj;
-    }
-    return obj;
-  };
+      return obj;
+    };
 
-  const response = {
-    store: injectBaseUrl({
+    // Dados Mockados de Alta Fidelidade (v6.0)
+    const storeInfo = {
       name: "Zygora Store",
       description: "Minimalist European Fashion",
-      url: "/",
-      home_url: "/",
-      site_title: "Zygora Store",
+      url: baseUrl,
+      home: baseUrl,
       admin_email: "admin@zygora.com",
       timezone: "Europe/Berlin",
       currency: "EUR",
@@ -109,22 +108,6 @@ const getStoreData = (req, res) => {
       country: "DE",
       language: "de_DE",
       wordpress_version: "6.4.3",
-      woocommerce_version: "8.5.1",
-      meta_data: []
-    }),
-    products: injectBaseUrl(require("../data/mockData").products),
-    orders: injectBaseUrl(require("../data/mockData").orders),
-    customers: injectBaseUrl(require("../data/mockData").customers),
-    settings: require("../data/mockData").settings,
-    system_status: injectBaseUrl(require("../data/mockData").systemStatus),
-    taxes: injectBaseUrl(require("../data/mockData").taxRates),
-    shipping_zones: injectBaseUrl(require("../data/mockData").shippingZones),
-    payment_gateways: injectBaseUrl(require("../data/mockData").paymentGateways),
-    webhooks: injectBaseUrl(require("../data/mockData").webhooks),
-    reports: injectBaseUrl(require("../data/mockData").reports),
-    countries: require("../data/mockData").countries,
-    currencies: require("../data/mockData").currencies,
-    stats: require("../data/mockData").stats,
     _links: {
       self: [{ href: `${baseUrl}/wp-json/wc/v3/data` }],
       help: [{ href: "https://woocommerce.github.io/woocommerce-rest-api-docs/" }],
