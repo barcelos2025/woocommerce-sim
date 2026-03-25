@@ -313,13 +313,13 @@ const webhooks = [
     topic: "order.created",
     resource: "order",
     event: "created",
-    delivery_url: "https://wiio.io/webhook/wc/order-create",
-    secret: "sec_abc123",
+    hooks: ["woocommerce_new_order"],
+    delivery_url: "/webhook-receiver-endpoint-wiio",
     date_created: "2024-01-01T10:00:00",
     date_created_gmt: "2024-01-01T09:00:00",
-    date_modified: "2024-01-01T10:00:00",
-    date_modified_gmt: "2024-01-01T09:00:00",
-    api_version: "v3",
+    date_modified: "2026-03-25T14:45:00",
+    date_modified_gmt: "2026-03-25T17:45:00",
+    secret: "sec_abc123789xyz",
     _links: {
       self: [{ href: "/wp-json/wc/v3/webhooks/1" }],
       collection: [{ href: "/wp-json/wc/v3/webhooks" }]

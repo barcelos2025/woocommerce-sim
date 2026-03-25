@@ -13,37 +13,61 @@ const {
 } = require("../data/mockData");
 
 const getWebhooks = (req, res) => {
-  const { search } = req.query;
-  const protocolo = req.headers["x-forwarded-proto"] || req.protocol;
-  const host = req.get("host");
-  const baseUrl = `${protocolo}://${host}`;
+  try {
+    const { search } = req.query;
+    const protocolo = req.headers["x-forwarded-proto"] || req.protocol;
+    const host = req.get("host");
+    const baseUrl = `${protocolo}://${host}`;
 
-  let filteredWebhooks = require("../data/mockData").webhooks;
+    // Acesso seguro aos dados mockados com fallback para array vazio
+    const allWebhooks = require("../data/mockData").webhooks || [];
+    let filteredWebhooks = [...allWebhooks];
 
-  if (search) {
-    filteredWebhooks = filteredWebhooks.filter(w => 
-      w.name.toLowerCase().includes(search.toLowerCase()) || 
-      w.topic.toLowerCase().includes(search.toLowerCase())
-    );
-  }
-
-  const injectBaseUrl = (obj) => {
-    if (Array.isArray(obj)) return obj.map(item => injectBaseUrl(item));
-    if (obj !== null && typeof obj === "object") {
-      const newObj = {};
-      for (const key in obj) {
-        if (["href", "permalink", "src"].includes(key) && typeof obj[key] === "string" && obj[key].startsWith("/")) {
-          newObj[key] = baseUrl + obj[key];
-        } else {
-          newObj[key] = injectBaseUrl(obj[key]);
-        }
-      }
-      return newObj;
+    // Lógica de busca insensível a maiúsculas/minúsculas
+    if (search && typeof search === "string") {
+      const searchLower = search.toLowerCase();
+      filteredWebhooks = filteredWebhooks.filter(w => 
+        (w.name && w.name.toLowerCase().includes(searchLower)) || 
+        (w.topic && w.topic.toLowerCase().includes(searchLower))
+      );
     }
-    return obj;
-  };
 
-  res.json(injectBaseUrl(filteredWebhooks));
+    // Engine recursivo para injetar Base URL em links relativos
+    const injectBaseUrl = (obj) => {
+      if (Array.isArray(obj)) return obj.map(item => injectBaseUrl(item));
+      if (obj !== null && typeof obj === "object") {
+        const newObj = {};
+        for (const key in obj) {
+          const val = obj[key];
+          if (["href", "permalink", "src"].includes(key) && typeof val === "string" && val.startsWith("/")) {
+            newObj[key] = baseUrl + val;
+          } else {
+            newObj[key] = injectBaseUrl(val);
+          }
+        }
+        return newObj;
+      }
+      return obj;
+    };
+
+    const finalWebhooks = injectBaseUrl(filteredWebhooks);
+
+    // Headers Padrão WooCommerce REST API para Listagens
+    res.setHeader("X-WP-Total", finalWebhooks.length);
+    res.setHeader("X-WP-TotalPages", 1);
+    
+    console.log(`[STABILITY v5.2] Webhooks search: "${search || 'none'}" | Found: ${finalWebhooks.length}`);
+
+    return res.status(200).json(finalWebhooks);
+  } catch (error) {
+    console.error("[CRITICAL BUG] Error in getWebhooks controller:", error);
+    // Retorno JSON seguro para evitar que o client (Wiio) receba um erro 500 sem corpo
+    return res.status(500).json({
+      code: "internal_server_error",
+      message: "Erro interno ao processar webhooks.",
+      error: error.message
+    });
+  }
 };
 
 const getStoreData = (req, res) => {
