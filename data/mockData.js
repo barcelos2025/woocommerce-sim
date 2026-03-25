@@ -157,10 +157,98 @@ const orders = [
   }
 ];
 
+const systemStatus = {
+  environment: {
+    home_url: "http://localhost:8081",
+    site_url: "http://localhost:8081",
+    version: "8.5.1",
+    log_directory: "/var/www/html/wp-content/uploads/wc-logs/",
+    wp_version: "6.4.3",
+    wp_multisite: false,
+    wp_memory_limit: "256M",
+    wp_debug_mode: false,
+    wp_cron: true,
+    language: "pt_BR",
+    server_info: "nginx/1.18.0",
+    php_version: "8.1.18",
+    php_post_max_size: "64M",
+    php_max_execution_time: "300",
+    mysql_version: "8.0.32",
+    max_upload_size: "64M",
+    default_timezone: "UTC"
+  },
+  database: {
+    wc_database_version: "8.5.1",
+    database_prefix: "wp_",
+    total_size: "15MB"
+  },
+  active_plugins: [
+    { plugin: "woocommerce/woocommerce.php", name: "WooCommerce", version: "8.5.1", network_activated: false },
+    { plugin: "wiio/wiio.php", name: "Wiio for WooCommerce", version: "1.2.0", network_activated: false },
+    { plugin: "elementor/elementor.php", name: "Elementor", version: "3.19.0", network_activated: false }
+  ],
+  theme: { name: "Storefront", version: "4.5.3", author_url: "https://woocommerce.com" }
+};
+
+const shippingZones = [
+  { id: 1, name: "Brasil", order: 1 }
+];
+
+const taxRates = [
+  { id: 1, country: "BR", state: "*", rate: "0.0000", name: "Isento", priority: 1, compound: false, shipping: true, order: 1, class: "standard" }
+];
+
+const webhooks = [];
+
+const settings = [
+  {
+    id: "general",
+    label: "Geral",
+    description: "Configurações gerais da loja.",
+    parent_id: ""
+  },
+  {
+    id: "products",
+    label: "Produtos",
+    description: "Configurações de produtos.",
+    parent_id: ""
+  }
+];
+
+const customers = [
+  {
+    id: 1,
+    date_created: "2026-01-01T12:00:00",
+    email: "cliente1@exemplo.com",
+    first_name: "Cliente",
+    last_name: "Um",
+    role: "customer",
+    username: "cliente1",
+    billing: {
+      first_name: "Cliente",
+      last_name: "Um",
+      company: "",
+      address_1: "Rua Teste, 123",
+      city: "São Paulo",
+      state: "SP",
+      postcode: "01000-000",
+      country: "BR",
+      email: "cliente1@exemplo.com",
+      phone: "11999999999"
+    }
+  }
+];
+
 const apiLogs = [];
 
 module.exports = {
   products,
   orders,
-  apiLogs
+  apiLogs,
+  systemStatus,
+  settings,
+  customers,
+  shippingZones,
+  taxRates,
+  webhooks
 };

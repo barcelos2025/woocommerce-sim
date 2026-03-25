@@ -1,15 +1,22 @@
 {
   "name": "woo-simulator",
   "version": "1.0.0",
-  "description": "Simulador de API WooCommerce v3 para testes",
+  "description": "WooCommerce REST API v3 Simulator for Integration Testing",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "dev": "node server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": [],
+  "keywords": [
+    "woocommerce",
+    "api",
+    "simulator",
+    "mock"
+  ],
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "express": "^4.22.1"
+    "express": "^4.18.2"
   }
 }

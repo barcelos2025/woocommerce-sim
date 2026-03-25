@@ -3,9 +3,9 @@ const apiRoutes = require("./routes/apiRoutes");
 const { apiLogs } = require("./data/mockData");
 
 const app = express();
-const PORT = process.env.PORT || 8080;
+const PORT = process.env.PORT || 8081;
 
-// 1. LOGGING MIDDLEWARE (Deve ser o primeiro para capturar tudo!)
+// 1. LOGGING MIDDLEWARE (Topo Absoluto)
 app.use((req, res, next) => {
   const now = new Date().toLocaleString();
   const logEntry = {
@@ -13,79 +13,103 @@ app.use((req, res, next) => {
     method: req.method,
     url: req.originalUrl,
     headers: req.headers,
-    body: req.body
+    body: req.body,
+    authType: "none"
   };
 
   // Salva no buffer (mantém os últimos 50 logs)
   apiLogs.unshift(logEntry);
   if (apiLogs.length > 50) apiLogs.pop();
 
-  // Log no Console
   console.log(`[${now}] ${req.method} ${req.originalUrl}`);
-  console.log("Headers:", JSON.stringify(req.headers, null, 2));
-  
-  // Note: O body pode estar vazio aqui se o express.json() ainda não rodou.
-  // Vamos imprimir o body depois de uma pequena espera ou no final da req?
-  // Melhor: vamos mover o express.json para DEPOIS do log básico, mas o log de body 
-  // precisa ocorrer depois do parser.
   next();
 });
 
-// 2. Ativar confiança em proxy
+// 2. CONFIGURAÇÕES EXPRESS & CORS
 app.set("trust proxy", true);
 
-// 3. Garantir Content-Type JSON
+// Middleware de CORS manual (Ultra Realism)
 app.use((req, res, next) => {
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, HEAD");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With, X-WP-Nonce");
   res.setHeader("Content-Type", "application/json");
+
+  if (req.method === "OPTIONS") {
+    return res.status(200).end();
+  }
   next();
 });
 
-// 4. Middleware para transformar body em JSON
 app.use(express.json());
 
-// 5. Middleware adicional para logar o Body após o parser
+// 3. HEALTHCHECK (Novo para Render)
+app.get("/health", (req, res) => {
+  res.json({
+    status: "ok",
+    timestamp: new Date().toISOString(),
+    service: "woo-simulator",
+    port: PORT
+  });
+});
+
+// 4. MELHORIA AUTENTICAÇÃO SIMULADA
+app.use((req, res, next) => {
+  let authType = "none";
+  let consumerKey = "unknown";
+
+  if (req.query.consumer_key) {
+    authType = "Query Params";
+    consumerKey = req.query.consumer_key;
+  } else if (req.headers.authorization && req.headers.authorization.startsWith("Basic ")) {
+    authType = "Basic Auth";
+    try {
+      const base64 = req.headers.authorization.split(" ")[1];
+      const decoded = Buffer.from(base64, "base64").toString("utf-8");
+      consumerKey = decoded.split(":")[0];
+    } catch (e) {
+      consumerKey = "invalid_base64";
+    }
+  }
+
+  if (apiLogs.length > 0 && apiLogs[0].url === req.originalUrl) {
+    apiLogs[0].authType = authType;
+    apiLogs[0].consumerKey = consumerKey;
+  }
+
+  console.log(`Auth: ${authType} | Key: ${consumerKey}`);
+  next();
+});
+
+// 5. LOG DE BODY PÓS-PARSER
 app.use((req, res, next) => {
   if (Object.keys(req.body).length > 0) {
-    console.log("Body:", JSON.stringify(req.body, null, 2));
-    // Atualiza o último log com o body populado
     if (apiLogs.length > 0 && apiLogs[0].url === req.originalUrl) {
       apiLogs[0].body = req.body;
     }
+    console.log("Body:", JSON.stringify(req.body, null, 2));
   }
   console.log("------------------------------------------");
   next();
 });
 
-// AUTH SIMULATION MIDDLEWARE
-// Aceita via Query Params ou Header
-app.use((req, res, next) => {
-  const ck_query = req.query.consumer_key;
-  const cs_query = req.query.consumer_secret;
-  const auth_header = req.headers.authorization;
-
-  // WooCommerce usa Basic Auth (Base64 de key:secret) no Header
-  // Aqui apenas verificamos se há algum sinal de tentativa de auth
-  if (ck_query || cs_query || auth_header) {
-    // Permitir qualquer valor conforme solicitado
-    return next();
-  }
-
-  // Opcional: Se quiser ser mais rigoroso e exigir auth:
-  // res.status(401).json({ code: "woocommerce_rest_cannot_view", message: "Sem autorização." });
-  
-  // Como a regra diz "não validar de verdade, apenas aceitar qualquer valor", 
-  // vamos seguir em frente mesmo sem nada, ou assumir que o usuário pode querer testar sem auth também.
-  next();
-});
-
-// ROTAS
+// 6. ROTAS PRINCIPAIS
 app.use("/", apiRoutes);
 
-// INICIALIZAÇÃO
+// 7. TRATAMENTO DE ERROS GLOBAL (Novo)
+app.use((err, req, res, next) => {
+  console.error("Critical Error Detected:", err);
+  res.status(500).json({
+    code: "internal_server_error",
+    message: "Ocorreu um erro interno no simulador.",
+    error: err.message
+  });
+});
+
+// 8. INICIALIZAÇÃO
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`==========================================`);
-  console.log(`🚀 WooCommerce Simulator running at:`);
-  console.log(`   http://0.0.0.0:${PORT}`);
-  console.log(`   (Accessible via localhost:${PORT})`);
+  console.log(`🚀 WooCommerce Simulator v5.0 (Render Ready)`);
+  console.log(`   Internal Port: ${PORT}`);
   console.log(`==========================================`);
 });
